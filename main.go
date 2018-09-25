@@ -6,25 +6,24 @@ import (
 	"strings"
 
 	"context"
-    "log"
-    "math/big"
-//     "time"
+	"log"
+	"math/big"
+	//     "time"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
-    "github.com/ethereum/go-ethereum/accounts/abi"
-    "github.com/ethereum/go-ethereum/accounts/abi/bind"
-    "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-    "github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
-    "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
- 
 func createSimulator() (*backends.SimulatedBackend, *bind.TransactOpts) {
-    key, _ := crypto.GenerateKey()
-    auth := bind.NewKeyedTransactor(key)
-    alloc := make(core.GenesisAlloc)
-    alloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(133700000)} // Genesis account
-    sim := backends.NewSimulatedBackend(alloc, 100000000) // 100000000 is gas limit
+	key, _ := crypto.GenerateKey()
+	auth := bind.NewKeyedTransactor(key)
+	alloc := make(core.GenesisAlloc)
+	alloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(133700000)} // Genesis account
+	sim := backends.NewSimulatedBackend(alloc, 100000000)                  // 100000000 is gas limit
 	return sim, auth
 }
 
@@ -41,12 +40,12 @@ func deployTester(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (chan
 	}
 	sim.Commit() // like mining
 	// Subscribe to events logs from tester
-    query := ethereum.FilterQuery{
-        Addresses: []common.Address{tester},
-    }
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{tester},
+	}
 	contractAbi, err := abi.JSON(strings.NewReader(string(TesterABI)))
 	if err != nil {
-	  log.Fatal(err)
+		log.Fatal(err)
 	}
 	logs := make(chan types.Log)
 	_, err = sim.SubscribeFilterLogs(context.Background(), query, logs)

@@ -1,14 +1,26 @@
-Want to be able to deploy code challenges on chain and 
-execute them via transactions. You should get rep for 
-writing code that passes the tests. Decentralized hackerrank/leetcode.
+Decentralized Hackerrank:
+- Submitting contract byte code to a Tester contract which validates whether
+your code passes the tests 
+- You can build reputation by solving these challenges
+- Your code needs to adhere to the interface of the challege
 
-Milestones:
-- Use ganach-cli as an rpc endpoint to start (later use test networks)
-- Deploy a dummy contract to ganach 
-- See if it is possible to actually execute some code in a contract on chain in the first place.
-Not entirely sure how to do this. First step could be have some test cases hard coded in 
-a contract, then spawn a new contract based on the input which self destructs after the "execution" of the user's
-input code.
+Example challenge:
+
+Write an implementation of an adder function according to this interface:
+
+contract Adder {
+    function add(uint a, uint b) returns (uint){}
+}
+
+Then you send a transaction with the compiled version of your implementation
+and we execute it. You receive pass/fail as a boolean from a TestPass event.
+
+TODO:
+- Figure out how to self destruct the submission contract after it gets tested so
+we dont just fill up the chain with submission contracts
+- Reputation system
+- A feature could be users can actually create their own challenges
+- Minimal UI to submit the code
 
 
 
