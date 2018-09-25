@@ -10,23 +10,14 @@ pragma solidity ^0.4.24;
 // address which when executed returns the bytecode of the contract, thus we should
 // be able to send some contract deploy byte code to the 0x
 
-// contract Factory {
-//     function create(bytes code) returns (address addr){
-//         assembly {
-//             addr := create(0,add(code,0x20), mload(code))
-//             //jumpi(invalidJumpLabel,iszero(extcodesize(addr)))
-//         }
-//     }
-// }
-// 
-
-// Just the interface of the deployed contract
+// Just the interface of the deployed contract, required
 contract Adder {
     function add(uint a, uint b) returns (uint){}
 }
 
 contract Tester {
-    uint public result = 3;
+    event TestPass(bool res);
+
     function create(bytes code) private returns (address addr){
         // Creates a contract based on code, 
         // returns address created there
@@ -36,7 +27,7 @@ contract Tester {
         }
     }
 
-    function test(bytes code) public returns(uint) {
+    function test(bytes code) public {
         // Create the add contract
         address deployed = create(code); 
         if(deployed == 0) throw;
@@ -45,6 +36,10 @@ contract Tester {
 //         // interface of Adder
         Adder deployedAdder = Adder(deployed);
         // Call add and return t/f if tests pass
-        result = deployedAdder.add(10, 10);
+        if (deployedAdder.add(10, 10) == 20) {
+            emit TestPass(true);
+        } else {
+            emit TestPass(false);
+        }
     }
 }
