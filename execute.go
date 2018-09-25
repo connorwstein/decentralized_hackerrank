@@ -17,7 +17,7 @@ import (
 const AdderABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"},{\"name\":\"b\",\"type\":\"uint256\"}],\"name\":\"add\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // AdderBin is the compiled bytecode used for deploying new contracts.
-const AdderBin = `0x6080604052348015600f57600080fd5b50609d8061001e6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663771602f781146043575b600080fd5b348015604e57600080fd5b50605b600435602435606d565b60408051918252519081900360200190f35b01905600a165627a7a723058206d993819755025d0891a9219f94a2838ea17ee03802979e005097e7d50e8404b0029`
+const AdderBin = `0x6080604052348015600f57600080fd5b5060a18061001e6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663771602f781146043575b600080fd5b348015604e57600080fd5b50605b600435602435606d565b60408051918252519081900360200190f35b6000929150505600a165627a7a72305820fa31dfa6ebdd2b3964dc10209349ac76b16eb156c553b258e8c317c00461238c0029`
 
 // DeployAdder deploys a new Ethereum contract, binding an instance of Adder to it.
 func DeployAdder(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Adder, error) {
@@ -195,201 +195,19 @@ func (_Adder *AdderTransactorSession) Add(a *big.Int, b *big.Int) (*types.Transa
 	return _Adder.Contract.Add(&_Adder.TransactOpts, a, b)
 }
 
-// FactoryABI is the input ABI used to generate the binding from.
-const FactoryABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"code\",\"type\":\"bytes\"}],\"name\":\"create\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-
-// FactoryBin is the compiled bytecode used for deploying new contracts.
-const FactoryBin = `0x608060405234801561001057600080fd5b5060ff8061001f6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663cf5ba53f81146043575b600080fd5b348015604e57600080fd5b506040805160206004803580820135601f8101849004840285018401909552848452609994369492936024939284019190819084018382808284375094975060c29650505050505050565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60008151602083016000f0929150505600a165627a7a72305820db76f4c173bf8970aa5992fb81ee7ba619d67482e8b2e7615a86dced4a7179ba0029`
-
-// DeployFactory deploys a new Ethereum contract, binding an instance of Factory to it.
-func DeployFactory(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Factory, error) {
-	parsed, err := abi.JSON(strings.NewReader(FactoryABI))
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(FactoryBin), backend)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	return address, tx, &Factory{FactoryCaller: FactoryCaller{contract: contract}, FactoryTransactor: FactoryTransactor{contract: contract}, FactoryFilterer: FactoryFilterer{contract: contract}}, nil
-}
-
-// Factory is an auto generated Go binding around an Ethereum contract.
-type Factory struct {
-	FactoryCaller     // Read-only binding to the contract
-	FactoryTransactor // Write-only binding to the contract
-	FactoryFilterer   // Log filterer for contract events
-}
-
-// FactoryCaller is an auto generated read-only Go binding around an Ethereum contract.
-type FactoryCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// FactoryTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type FactoryTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// FactoryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type FactoryFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// FactorySession is an auto generated Go binding around an Ethereum contract,
-// with pre-set call and transact options.
-type FactorySession struct {
-	Contract     *Factory          // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
-}
-
-// FactoryCallerSession is an auto generated read-only Go binding around an Ethereum contract,
-// with pre-set call options.
-type FactoryCallerSession struct {
-	Contract *FactoryCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts  // Call options to use throughout this session
-}
-
-// FactoryTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
-// with pre-set transact options.
-type FactoryTransactorSession struct {
-	Contract     *FactoryTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
-}
-
-// FactoryRaw is an auto generated low-level Go binding around an Ethereum contract.
-type FactoryRaw struct {
-	Contract *Factory // Generic contract binding to access the raw methods on
-}
-
-// FactoryCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type FactoryCallerRaw struct {
-	Contract *FactoryCaller // Generic read-only contract binding to access the raw methods on
-}
-
-// FactoryTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type FactoryTransactorRaw struct {
-	Contract *FactoryTransactor // Generic write-only contract binding to access the raw methods on
-}
-
-// NewFactory creates a new instance of Factory, bound to a specific deployed contract.
-func NewFactory(address common.Address, backend bind.ContractBackend) (*Factory, error) {
-	contract, err := bindFactory(address, backend, backend, backend)
-	if err != nil {
-		return nil, err
-	}
-	return &Factory{FactoryCaller: FactoryCaller{contract: contract}, FactoryTransactor: FactoryTransactor{contract: contract}, FactoryFilterer: FactoryFilterer{contract: contract}}, nil
-}
-
-// NewFactoryCaller creates a new read-only instance of Factory, bound to a specific deployed contract.
-func NewFactoryCaller(address common.Address, caller bind.ContractCaller) (*FactoryCaller, error) {
-	contract, err := bindFactory(address, caller, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &FactoryCaller{contract: contract}, nil
-}
-
-// NewFactoryTransactor creates a new write-only instance of Factory, bound to a specific deployed contract.
-func NewFactoryTransactor(address common.Address, transactor bind.ContractTransactor) (*FactoryTransactor, error) {
-	contract, err := bindFactory(address, nil, transactor, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &FactoryTransactor{contract: contract}, nil
-}
-
-// NewFactoryFilterer creates a new log filterer instance of Factory, bound to a specific deployed contract.
-func NewFactoryFilterer(address common.Address, filterer bind.ContractFilterer) (*FactoryFilterer, error) {
-	contract, err := bindFactory(address, nil, nil, filterer)
-	if err != nil {
-		return nil, err
-	}
-	return &FactoryFilterer{contract: contract}, nil
-}
-
-// bindFactory binds a generic wrapper to an already deployed contract.
-func bindFactory(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(FactoryABI))
-	if err != nil {
-		return nil, err
-	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_Factory *FactoryRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _Factory.Contract.FactoryCaller.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_Factory *FactoryRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Factory.Contract.FactoryTransactor.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_Factory *FactoryRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Factory.Contract.FactoryTransactor.contract.Transact(opts, method, params...)
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_Factory *FactoryCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _Factory.Contract.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_Factory *FactoryTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Factory.Contract.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_Factory *FactoryTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Factory.Contract.contract.Transact(opts, method, params...)
-}
-
-// Create is a paid mutator transaction binding the contract method 0xcf5ba53f.
-//
-// Solidity: function create(code bytes) returns(addr address)
-func (_Factory *FactoryTransactor) Create(opts *bind.TransactOpts, code []byte) (*types.Transaction, error) {
-	return _Factory.contract.Transact(opts, "create", code)
-}
-
-// Create is a paid mutator transaction binding the contract method 0xcf5ba53f.
-//
-// Solidity: function create(code bytes) returns(addr address)
-func (_Factory *FactorySession) Create(code []byte) (*types.Transaction, error) {
-	return _Factory.Contract.Create(&_Factory.TransactOpts, code)
-}
-
-// Create is a paid mutator transaction binding the contract method 0xcf5ba53f.
-//
-// Solidity: function create(code bytes) returns(addr address)
-func (_Factory *FactoryTransactorSession) Create(code []byte) (*types.Transaction, error) {
-	return _Factory.Contract.Create(&_Factory.TransactOpts, code)
-}
-
 // TesterABI is the input ABI used to generate the binding from.
-const TesterABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"uint256\"},{\"name\":\"y\",\"type\":\"uint256\"}],\"name\":\"test\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"factory\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
+const TesterABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"code\",\"type\":\"bytes\"}],\"name\":\"test\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"result\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // TesterBin is the compiled bytecode used for deploying new contracts.
-const TesterBin = `0x608060405234801561001057600080fd5b5060405160208061031283398101604081905290517fcf5ba53f00000000000000000000000000000000000000000000000000000000825260206004830190815260c5602484018190529192600160a060020a0384169263cf5ba53f9291829160449091019061024d823960e001915050602060405180830381600087803b15801561009b57600080fd5b505af11580156100af573d6000803e3d6000fd5b505050506040513d60208110156100c557600080fd5b505160008054600160a060020a031916600160a060020a0392831617908190551615156100f157600080fd5b5061014c806101016000396000f3006080604052600436106100405763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663eb8ac9218114610045575b600080fd5b34801561005157600080fd5b50610060600435602435610072565b60408051918252519081900360200190f35b60008054604080517f771602f70000000000000000000000000000000000000000000000000000000081526004810186905260248101859052905173ffffffffffffffffffffffffffffffffffffffff9092169163771602f79160448082019260209290919082900301818787803b1580156100ed57600080fd5b505af1158015610101573d6000803e3d6000fd5b505050506040513d602081101561011757600080fd5b505193925050505600a165627a7a72305820360cbd057678a2ca84de0a60aed8cb693c172223f3d2f61e45b088d3b2dc2b260029606060405234610000575b60ad806100186000396000f30060606040526000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f714603c575b6000565b34600057605d60048080359060200190919080359060200190919050506073565b6040518082815260200191505060405180910390f35b600081830190505b929150505600a165627a7a723058205d7bec00c6d410f7ea2a3b03112b597bb3ef544439889ecc1294a77b85eab15e0029`
+const TesterBin = `0x6080604052600360005534801561001557600080fd5b506101ff806100256000396000f30060806040526004361061004b5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632f570a23811461005057806365372147146100bb575b600080fd5b34801561005c57600080fd5b506040805160206004803580820135601f81018490048402850184019095528484526100a99436949293602493928401919081908401838280828437509497506100d09650505050505050565b60408051918252519081900360200190f35b3480156100c757600080fd5b506100a96101bc565b60008060006100de846101c2565b915073ffffffffffffffffffffffffffffffffffffffff8216151561010257600080fd5b819050600a6000819055508073ffffffffffffffffffffffffffffffffffffffff1663771602f7600a806040518363ffffffff167c01000000000000000000000000000000000000000000000000000000000281526004018083815260200182815260200192505050602060405180830381600087803b15801561018557600080fd5b505af1158015610199573d6000803e3d6000fd5b505050506040513d60208110156101af57600080fd5b5051600055509092915050565b60005481565b60008151602083016000f0929150505600a165627a7a72305820a953bbf1a8ed7003040411c669caad885ca69abf5864fe98a5a9f1fc8682b25c0029`
 
 // DeployTester deploys a new Ethereum contract, binding an instance of Tester to it.
-func DeployTester(auth *bind.TransactOpts, backend bind.ContractBackend, factory common.Address) (common.Address, *types.Transaction, *Tester, error) {
+func DeployTester(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Tester, error) {
 	parsed, err := abi.JSON(strings.NewReader(TesterABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(TesterBin), backend, factory)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(TesterBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -538,28 +356,49 @@ func (_Tester *TesterTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Tester.Contract.contract.Transact(opts, method, params...)
 }
 
-// Test is a free data retrieval call binding the contract method 0xeb8ac921.
+// Result is a free data retrieval call binding the contract method 0x65372147.
 //
-// Solidity: function test(x uint256, y uint256) constant returns(uint256)
-func (_Tester *TesterCaller) Test(opts *bind.CallOpts, x *big.Int, y *big.Int) (*big.Int, error) {
+// Solidity: function result() constant returns(uint256)
+func (_Tester *TesterCaller) Result(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _Tester.contract.Call(opts, out, "test", x, y)
+	err := _Tester.contract.Call(opts, out, "result")
 	return *ret0, err
 }
 
-// Test is a free data retrieval call binding the contract method 0xeb8ac921.
+// Result is a free data retrieval call binding the contract method 0x65372147.
 //
-// Solidity: function test(x uint256, y uint256) constant returns(uint256)
-func (_Tester *TesterSession) Test(x *big.Int, y *big.Int) (*big.Int, error) {
-	return _Tester.Contract.Test(&_Tester.CallOpts, x, y)
+// Solidity: function result() constant returns(uint256)
+func (_Tester *TesterSession) Result() (*big.Int, error) {
+	return _Tester.Contract.Result(&_Tester.CallOpts)
 }
 
-// Test is a free data retrieval call binding the contract method 0xeb8ac921.
+// Result is a free data retrieval call binding the contract method 0x65372147.
 //
-// Solidity: function test(x uint256, y uint256) constant returns(uint256)
-func (_Tester *TesterCallerSession) Test(x *big.Int, y *big.Int) (*big.Int, error) {
-	return _Tester.Contract.Test(&_Tester.CallOpts, x, y)
+// Solidity: function result() constant returns(uint256)
+func (_Tester *TesterCallerSession) Result() (*big.Int, error) {
+	return _Tester.Contract.Result(&_Tester.CallOpts)
+}
+
+// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+//
+// Solidity: function test(code bytes) returns(uint256)
+func (_Tester *TesterTransactor) Test(opts *bind.TransactOpts, code []byte) (*types.Transaction, error) {
+	return _Tester.contract.Transact(opts, "test", code)
+}
+
+// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+//
+// Solidity: function test(code bytes) returns(uint256)
+func (_Tester *TesterSession) Test(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.Test(&_Tester.TransactOpts, code)
+}
+
+// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+//
+// Solidity: function test(code bytes) returns(uint256)
+func (_Tester *TesterTransactorSession) Test(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.Test(&_Tester.TransactOpts, code)
 }
