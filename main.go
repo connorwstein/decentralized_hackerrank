@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"strings"
-
+	"net/http"
+	"html/template"
 	"context"
 	"log"
 	"math/big"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/compiler"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -61,4 +63,43 @@ func deployTester(sim *backends.SimulatedBackend, auth *bind.TransactOpts) (chan
 		},
 	}
 	return logs, contractAbi, tester, session
+}
+
+type Page struct {
+	Title string
+	Body string
+}
+
+func submit(w http.ResponseWriter, r *http.Request) {
+	// This POST takes in the user's contract code
+	// Compile the smart contract code and 
+	// submit it to the blockchain for tests
+    body := r.FormValue("body")
+	log.Println(body)
+	// Compile this code
+	contracts, err := compiler.CompileSolidityString("", body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return 
+	}
+	log.Println(contracts, err)
+	http.Redirect(w, r, "/view/", http.StatusFound)
+}
+
+func edit(w http.ResponseWriter, r *http.Request) {
+ 	t, _ := template.ParseFiles("index.html")
+    t.Execute(w, Page{Title:"test", Body:"test"})
+}
+
+func view(w http.ResponseWriter, r *http.Request) {
+	// View open challenges, reputations etc.
+ 	t, _ := template.ParseFiles("view.html")
+    t.Execute(w, struct{}{})
+}
+
+func main() {
+	http.HandleFunc("/", edit)
+	http.HandleFunc("/submit/", submit)
+	http.HandleFunc("/view/", view)
+	http.ListenAndServe(":8080", nil)
 }

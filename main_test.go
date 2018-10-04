@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Used for low level testing
 func TestAdder(t *testing.T) {
 	// Test that a successful implementation of adder
 	// passes the tests
