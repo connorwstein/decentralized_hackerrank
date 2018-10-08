@@ -8,7 +8,7 @@ import (
 	"html/template"
 	"context"
 	"encoding/hex"
-	"reflect"
+// 	"reflect"
 	"log"
 	"math/big"
     "time"
@@ -31,6 +31,7 @@ type SubmissionRunner struct {
 	contractAbi abi.ABI
 	address common.Address
 	session *TesterSession
+	results []Result
 }
 
 func (s *SubmissionRunner) create() {
@@ -41,6 +42,7 @@ func (s *SubmissionRunner) create() {
 	sim := backends.NewSimulatedBackend(alloc, 100000000)                  // 100000000 is gas limit
 	s.sim = sim
 	s.auth = auth
+	s.results = make([]Result, 0)
 }
 
 func (s *SubmissionRunner) deployRunner() {
@@ -84,14 +86,12 @@ func (s *SubmissionRunner) deployRunner() {
 
 func (s SubmissionRunner) submitCode(contractSubmission *compiler.Contract) bool {
 	resultChan := s.getResult()
-	workingCode := "608060405234801561001057600080fd5b5060c58061001f6000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f7146044575b600080fd5b348015604f57600080fd5b5060766004803603810190808035906020019092919080359060200190929190505050608c565b6040518082815260200191505060405180910390f35b60008183019050929150505600a165627a7a72305820e80809f762456af961d7357d0db84ff34c4cf49807222c472768ee39b60ac7a80029"
-	adderCode, _ := hex.DecodeString(contractSubmission.Code)
-	log.Printf("Contract info %v", contractSubmission.Info)
-// 	adderCode, _ := hex.DecodeString(workingCode)
-	// 	fmt.Println("adder bytecode err", err)
+	adderCode, err := hex.DecodeString(contractSubmission.Code[2:])
 	tx, err := s.session.Test(adderCode)
+	receipt, rerr := s.sim.TransactionReceipt(context.Background(), tx.Hash())
+	log.Println("Receipt: ", receipt, rerr)
 	log.Println("Result:", tx.Hash(), err)
-	log.Printf("Submitted code %v working %v", contractSubmission.Code, workingCode)
+	log.Printf("Submitted code %v", adderCode)
 	s.sim.Commit() // like mining, should trigger the log
 	return <- resultChan
 }
@@ -101,26 +101,22 @@ func (s SubmissionRunner) getResult() chan bool {
 	result := make(chan bool)
 	go func(result chan bool) {
 		timeout := time.After(10 * time.Second)
-		for {
-			select {
-			// 			case err := <-sub.Err():
-			// 				log.Fatal(err)
-			// 				break
-			case <-timeout:
-				log.Println("Timeout waiting for response")
-				result <- false
-				break
-			case vLog := <-s.logs:
-				var event bool
-				log.Println(s.contractAbi, vLog.Data)
-				err := s.contractAbi.Unpack(&event, "TestPass", vLog.Data)
-				if err != nil {
-					log.Fatal(err)
-				}
-				log.Println("Got a log", event) // pointer to event log
-				result <- event
-				break
+		select {
+		// 			case err := <-sub.Err():
+		// 				log.Fatal(err)
+		// 				break
+		case <-timeout:
+			log.Println("Timeout waiting for response")
+			result <- false
+		case vLog := <-s.logs:
+			var event bool
+			log.Println(s.contractAbi, vLog.Data)
+			err := s.contractAbi.Unpack(&event, "TestPass", vLog.Data)
+			if err != nil {
+				log.Fatal(err)
 			}
+			log.Println("Got a log", event) // pointer to event log
+			result <- event
 		}
 	}(result)
 	return result 
@@ -137,7 +133,11 @@ func submit(w http.ResponseWriter, r *http.Request) {
     body := r.FormValue("body")
 	log.Println(body)
 	// Compile this code returns 
-	// map[string]*Contract
+	// NOTE this compiler wrapper from the geth codebase
+	// automatically enables optimization, which for unknown reasons
+	// does not work with my tester contract to make this work you
+	// need to comment out --optimize in makeArgs in common/compiler/solidity.go 
+	fmt.Println(compiler.SolidityVersion(""))
 	contracts, err := compiler.CompileSolidityString("", body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -145,20 +145,17 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(contracts, err)
 	// If it compiles submit it to the tester and get a result
-	for k,_ := range contracts {
-		log.Println(reflect.TypeOf(k))
-		log.Println("KEY:", k)
-	}
 	if adder, ok := contracts["<stdin>:Adder"]; ok {
-// 		log.Println("Adder code", adder.Code)
+		log.Println("Adder code", adder.Code)
 		// Submit the code
 		res := runner.submitCode(adder)
 		log.Printf("Submission result was %v", res)
+		// Based on the result update the screen
+		runner.results = append(runner.results, Result{runner.auth.From.Hex(), "Adder", res})
 	} else {
 		http.Error(w, "Does not adhere to interface", http.StatusBadRequest)
 		return	
 	}
-// 	contracts["
 	http.Redirect(w, r, "/view/", http.StatusFound)
 }
 
@@ -167,12 +164,19 @@ func edit(w http.ResponseWriter, r *http.Request) {
     t.Execute(w, Submission{Title:"adder"})
 }
 
+type Result struct {
+	Submitter string // public key
+	Challenge string	
+	Pass bool
+}
+
 func view(w http.ResponseWriter, r *http.Request) {
 	// View open challenges, reputations etc.
 	// We should be able to query the chain to get this info
 	// Clicking on a challenge should take you to the edit page
- 	t, _ := template.ParseFiles("view.html")
-    t.Execute(w, struct{}{})
+ 	t, err := template.ParseFiles("view.html")
+	fmt.Println("Error when parsing template ", err)
+    t.Execute(w, runner.results)
 }
 
 func main() {

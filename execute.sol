@@ -22,7 +22,7 @@ contract Tester {
         // Creates a contract based on code, 
         // returns address created there
         assembly {
-            addr := create(0,add(code,0x20), mload(code))
+            addr := create(0, add(code, 0x20), mload(code))
             //jumpi(invalidJumpLabel,iszero(extcodesize(addr)))
         }
     }
