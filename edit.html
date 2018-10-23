@@ -1,0 +1,46 @@
+<p>Editing {{ .Name }}</p>
+
+<form action="/submit/{{.Name}}" method="POST">
+<div>
+    <textarea id="editor" name="body" rows="20" cols="80">
+pragma solidity ^0.4.24;
+
+contract {{ .Name }} {
+
+    {{ .Interface }} {
+    }
+
+}
+    </textarea>
+</div>
+<div><input type="submit" value="Submit"></div>
+</form>
+<script>
+function enableTab(id) {
+    var el = document.getElementById(id);
+    el.onkeydown = function(e) {
+        if (e.keyCode === 9) { // tab was pressed
+
+            // get caret position/selection
+            var val = this.value,
+                start = this.selectionStart,
+                end = this.selectionEnd;
+
+            // set textarea value to: text before caret + tab + text after caret
+            this.value = val.substring(0, start) + '\t' + val.substring(end);
+
+            // put caret at right position again
+            this.selectionStart = this.selectionEnd = start + 1;
+
+            // prevent the focus lose
+            return false;
+
+        }
+    };
+}
+
+// Enable the tab character onkeypress (onkeydown) inside textarea...
+// ... for a textarea that has an `id="my-textarea"`
+enableTab('editor');
+</script>
+<p><a href="../index.html">Back to challenges</a></p>

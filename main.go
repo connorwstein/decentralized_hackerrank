@@ -34,6 +34,14 @@ type SubmissionRunner struct {
 	results []Result
 }
 
+type Challenge struct {
+	Name string
+	Difficulty string	
+	Interface string
+}
+
+var challenges map[string]Challenge
+
 func (s *SubmissionRunner) create() {
 	key, _ := crypto.GenerateKey()
 	auth := bind.NewKeyedTransactor(key)
@@ -102,28 +110,21 @@ func (s SubmissionRunner) getResult() chan bool {
 	go func(result chan bool) {
 		timeout := time.After(10 * time.Second)
 		select {
-		// 			case err := <-sub.Err():
-		// 				log.Fatal(err)
-		// 				break
-		case <-timeout:
-			log.Println("Timeout waiting for response")
-			result <- false
-		case vLog := <-s.logs:
-			var event bool
-			log.Println(s.contractAbi, vLog.Data)
-			err := s.contractAbi.Unpack(&event, "TestPass", vLog.Data)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Println("Got a log", event) // pointer to event log
-			result <- event
+			case <-timeout:
+				log.Println("Timeout waiting for response")
+				result <- false
+			case vLog := <-s.logs:
+				var event bool
+				log.Println(s.contractAbi, vLog.Data)
+				err := s.contractAbi.Unpack(&event, "TestPass", vLog.Data)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Println("Got a log", event) // pointer to event log
+				result <- event
 		}
 	}(result)
 	return result 
-}
-
-type Submission struct {
-	Title string
 }
 
 func submit(w http.ResponseWriter, r *http.Request) {
@@ -160,8 +161,13 @@ func submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func edit(w http.ResponseWriter, r *http.Request) {
- 	t, _ := template.ParseFiles("index.html")
-    t.Execute(w, Submission{Title:"adder"})
+ 	t, err := template.ParseFiles("edit.html")
+	if err != nil {
+		fmt.Println("Error when parsing template ", err)
+	}
+	challenge := r.URL.Path[len("/edit/"):]
+	fmt.Println("Editing challenge: ", challenge, challenges[challenge])
+    t.Execute(w, challenges[challenge])
 }
 
 type Result struct {
@@ -170,22 +176,36 @@ type Result struct {
 	Pass bool
 }
 
-func view(w http.ResponseWriter, r *http.Request) {
+func viewResults(w http.ResponseWriter, r *http.Request) {
 	// View open challenges, reputations etc.
 	// We should be able to query the chain to get this info
 	// Clicking on a challenge should take you to the edit page
  	t, err := template.ParseFiles("view.html")
-	fmt.Println("Error when parsing template ", err)
+	if err != nil {
+		fmt.Println("Error when parsing template ", err)
+	}
     t.Execute(w, runner.results)
+}
+
+func viewChallenges(w http.ResponseWriter, r *http.Request) {
+	// Walk through all the available challenges
+ 	t, err := template.ParseFiles("index.html")
+	if err != nil {
+		fmt.Println("Error when parsing template ", err)
+	}
+    t.Execute(w, challenges)
 }
 
 func main() {
 	// initialize the simulated backend and deploy the tester 
 	// contract
+	challenges = make(map[string]Challenge) 
+	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
 	runner.create()
 	runner.deployRunner()
-	http.HandleFunc("/", edit)
+	http.HandleFunc("/", viewChallenges)
+	http.HandleFunc("/edit/", edit)
 	http.HandleFunc("/submit/", submit)
-	http.HandleFunc("/view/", view)
+	http.HandleFunc("/view/", viewResults)
 	http.ListenAndServe(":8080", nil)
 }
