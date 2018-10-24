@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 // 	"github.com/ethereum/go-ethereum"
-// 	"strings"
+	"strings"
+	"bytes"
+	"os/exec"
+	"io/ioutil"
 	"net/http"
 	"html/template"
 // 	"context"
@@ -134,41 +137,69 @@ func viewChallenges(w http.ResponseWriter, r *http.Request) {
     t.Execute(w, challenges)
 }
 
+// Given path to tester contract, compile it and 
+// and return a string of bytecode 
+func compileContract(name, path string) string {
+	// Assumes solc is install locally
+	// cant use the compiler in geth codebase because of
+	// the optimization bug
+	// solc --bin execute.sol -o .
+	cmd := exec.Command("solc", "--bin",  path, "-o .", "--overwrite")
+	fmt.Println(cmd)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("err running cmd", err)
+		return "" 
+	}
+	contents, err := ioutil.ReadFile(fmt.Sprintf("%v.bin", name))
+	buf := bytes.NewBuffer(contents)
+	return buf.String()
+}
+
+func padRightSide(str string, item string, count int) string {
+	return str + strings.Repeat(item, count)
+}
+
+func buildInput(testContract string) string {
+	// Given a testContract string of bytes
+	// Assemble that into input data for a call to 
+	// test in the Tester contract
+	functionSelector := "2f570a23" // 4 bytes of keccak(test(bytes))
+	// Dynamic arguments have their offset stored first 
+	// In our case test only has one argument (bytes)
+	// So it starts 32 bytes (0x20) after the start of the arguments
+	// section
+	offset := fmt.Sprintf("%064x", 32) 
+	length := fmt.Sprintf("%064x", len(testContract))
+	// Now the data section
+	// Will need to pad the testContract with zeroes 
+	// to make it a multiple of 32
+	testContract = padRightSide(testContract, "0", (len(testContract) / 32 + 1) * 32 - len(testContract))
+	return strings.Join([]string{functionSelector, offset, length, testContract}, "")
+}
+
 func main() {
-	// initialize the simulated backend and deploy the tester 
-	// contract
 	challenges = make(map[string]Challenge) 
 	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
+	tester := compileContract("Tester", "execute.sol")
 	var n Node
 	n.initializeNode("http://localhost:8545")
 	fmt.Println(n.Accounts)
-// 	adder := "608060405234801561001057600080fd5b5060c58061001f6000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f7146044575b600080fd5b348015604f57600080fd5b5060766004803603810190808035906020019092919080359060200190929190505050608c565b6040518082815260200191505060405180910390f35b60008183019050929150505600a165627a7a72305820f364b5f1249cb19c2df18521b0ffe9bbf8849deb1584f4df2f9580e0a27768f00029"
-	tester := "608060405234801561001057600080fd5b50610260806100206000396000f300608060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680632f570a2314610046575b600080fd5b34801561005257600080fd5b506100ad600480360381019080803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091929192905050506100af565b005b6000806100bb83610222565b915060008273ffffffffffffffffffffffffffffffffffffffff1614156100e157600080fd5b81905060148173ffffffffffffffffffffffffffffffffffffffff1663771602f7600a806040518363ffffffff167c01000000000000000000000000000000000000000000000000000000000281526004018083815260200182815260200192505050602060405180830381600087803b15801561015e57600080fd5b505af1158015610172573d6000803e3d6000fd5b505050506040513d602081101561018857600080fd5b810190808051906020019092919050505014156101e0577fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e6001604051808215151515815260200191505060405180910390a161021d565b7fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e6000604051808215151515815260200191505060405180910390a15b505050565b60008151602083016000f090509190505600a165627a7a72305820f83f43cb3cdf51339142eeb9bbbcaf3f82d6ba75faa507cc3f39e433c932e25e0029" 
+	adder := "608060405234801561001057600080fd5b5060c58061001f6000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f7146044575b600080fd5b348015604f57600080fd5b5060766004803603810190808035906020019092919080359060200190929190505050608c565b6040518082815260200191505060405180910390f35b60008183019050929150505600a165627a7a72305820f364b5f1249cb19c2df18521b0ffe9bbf8849deb1584f4df2f9580e0a27768f00029"
 	address, _ := n.deployContract(tester)
 	fmt.Println(address)
 	// Call test at the tester address with argument adder 
 	// https://ethereum.stackexchange.com/questions/3780/how-can-i-create-a-listener-for-new-transaction-with-ethereum-rpc-calls
 	filterID := n.ethNewFilter(address, "da82b96f")
-	// Run the tests for the adder code
-// keccak("test(bytes)") 2f570a234f56174a0be5cf2fff788ff394b02e8140a68e91a993c49f6c1e0219
-	// Since bytes is a dynamic type 
-	// We will need
-	// Offset of 32 as the first 32 
-// "0000000000000000000000000000000000000000000000000000000000000020"
-// Then the data part is the length in bytes in one 32 byte word
-// Followed by all the bytes padded
-// 	funcHash := "2f570a23"
-// 	offset := "0000000000000000000000000000000000000000000000000000000000000020"
-// 	length := len(adder)   	 // 456 --> 1c8
-	data := "2f570a23000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001c8608060405234801561001057600080fd5b5060c58061001f6000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f7146044575b600080fd5b348015604f57600080fd5b5060766004803603810190808035906020019092919080359060200190929190505050608c565b6040518082815260200191505060405180910390f35b60008183019050929150505600a165627a7a72305820f364b5f1249cb19c2df18521b0ffe9bbf8849deb1584f4df2f9580e0a27768f0002900000000000000000000000000000000000000000000000000000000"
-	res, err := n.ethSendTransaction(n.Accounts[0], address, data)
+	fmt.Println("input", buildInput(adder))	
+	res, err := n.ethSendTransaction(n.Accounts[0], address, buildInput(adder))
 	fmt.Println(res, err)
 
 	// Query filter for results
 	// given filterID
 	n.ethGetFilterChanges(filterID)
-
-
 
 // 	runner.create()
 // 	runner.deployRunner()
