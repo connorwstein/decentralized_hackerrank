@@ -29,6 +29,7 @@ contract Tester {
 
     function test(bytes code) public {
         // Create the add contract
+// keccak("test(bytes)") 2f570a234f56174a0be5cf2fff788ff394b02e8140a68e91a993c49f6c1e0219
         address deployed = create(code); 
         if(deployed == 0) throw;
 //         // Could be some kind of error if they bytecode
