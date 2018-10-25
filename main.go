@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 // 	"github.com/ethereum/go-ethereum"
+	"encoding/hex"
 	"strings"
+	"path/filepath"
 	"bytes"
 	"os/exec"
+	"os"
 	"io/ioutil"
 	"net/http"
 	"html/template"
@@ -23,6 +26,7 @@ import (
 // 	"github.com/ethereum/go-ethereum/core"
 // 	"github.com/ethereum/go-ethereum/core/types"
 // 	"github.com/ethereum/go-ethereum/crypto"
+// 	"reflect"
 )
 
 type DHR struct {
@@ -57,7 +61,6 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	// Body will be a smart contract which we need to compile and then submit
 	err := ioutil.WriteFile("adder.sol", buf.Bytes(), 0644)
 	adder := compileContract("Adder", "adder.sol")
-// adder := "608060405234801561001057600080fd5b5060c58061001f6000396000f300608060405260043610603f576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063771602f7146044575b600080fd5b348015604f57600080fd5b5060766004803603810190808035906020019092919080359060200190929190505050608c565b6040518082815260200191505060405180910390f35b60008183019050929150505600a165627a7a72305820f364b5f1249cb19c2df18521b0ffe9bbf8849deb1584f4df2f9580e0a27768f00029"
 	fmt.Println("from:", dhr.client.Accounts[0])
 	fmt.Println("to:", dhr.testAddress)
 	res, err := dhr.client.ethSendTransaction(dhr.client.Accounts[0], dhr.testAddress, buildInput(adder))
@@ -65,7 +68,13 @@ func submit(w http.ResponseWriter, r *http.Request) {
 
 	// Query filter for results
 	// given filterID
-	dhr.client.ethGetFilterChanges(dhr.filterID)
+	testResults := dhr.client.ethGetFilterChanges(dhr.filterID)
+	testResultsBytes, _ := hex.DecodeString(testResults[2:])
+	pass := false
+	if testResultsBytes[len(testResultsBytes) - 1] > 0 {
+		pass = true
+	}
+	dhr.results = append(dhr.results, Result{dhr.client.Accounts[0], "Adder", pass})
 	// Update results
 	http.Redirect(w, r, "/view/", http.StatusFound)
 }
@@ -100,6 +109,19 @@ func viewChallenges(w http.ResponseWriter, r *http.Request) {
     t.Execute(w, dhr.challenges)
 }
 
+
+func clearCompiledContracts() {
+	files, err := filepath.Glob("*.bin")
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			panic(err)
+		}
+	}
+}
+
 // Given path to tester contract, compile it and 
 // and return a string of bytecode 
 func compileContract(name, path string) string {
@@ -107,7 +129,8 @@ func compileContract(name, path string) string {
 	// cant use the compiler in geth codebase because of
 	// the optimization bug
 	// solc --bin execute.sol -o .
-	cmd := exec.Command("solc", "--bin",  path, "-o .", "--overwrite")
+	clearCompiledContracts()
+	cmd := exec.Command("solc", "--bin", path, "-o", ".")
 	fmt.Println(cmd)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -117,6 +140,10 @@ func compileContract(name, path string) string {
 		return "" 
 	}
 	contents, err := ioutil.ReadFile(fmt.Sprintf("%v.bin", name))
+	if err != nil {
+		fmt.Println("err reading file", err)
+		return "" 
+	}
 	buf := bytes.NewBuffer(contents)
 	return buf.String()
 }

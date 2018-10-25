@@ -22,7 +22,3 @@ TODO:
 we dont just fill up the chain with submission contracts
 - Reputation system
 - A feature could be users can actually create their own challenges
-
-
-
-

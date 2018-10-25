@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-// 	"reflect"
+	"reflect"
 	"fmt"
 	"encoding/json"
 	"bytes"
@@ -52,6 +52,7 @@ func (n *Client) initializeClient(address string) (error) {
 func (n Client) deployContract(contractCode string) (string, error) {
 	params := make(map[string]string)
 	params["from"] = n.Accounts[0] // Just pick the first account
+	// TODO: look into using the suggested gas price
 	params["gas"] = "0xfffff" // fffff seems to be sufficient for contract deployment (default of 90k is not)
 	params["data"] = contractCode 
 	tx, err := n.makeRequest("eth_sendTransaction", []interface{}{params})
@@ -87,14 +88,20 @@ func (n Client) ethNewFilter(address string, topic string) string {
 	params["address"] = address
 	params["topic"] = topic
 	resp, err := n.makeRequest("eth_newFilter", []interface{}{params})
-	fmt.Println(resp, err)
+	fmt.Println(err)
 	return resp.(string)
 }
 
-func (n Client) ethGetFilterChanges(filterID string) {
+func (n Client) ethGetFilterChanges(filterID string) string {
 	// eth_getFilterChanges
 	resp, err := n.makeRequest("eth_getFilterChanges", []interface{}{[]string{filterID}})
 	fmt.Println(resp, err)
+	// Consume the first log
+	resp = resp.([]interface{})[0]
+	change := resp.(map[string]interface{})
+	fmt.Println(reflect.TypeOf(change["data"].(string)))
+	// Extract just the data from this change
+	return change["data"].(string)
 }
 
 // Returns an interface which is a string or []string depending on the call
@@ -118,7 +125,7 @@ func (n Client) makeRequest(api string, params []interface{}) (interface{}, erro
 	if respErr != nil {
 		return nil, respErr
 	}
-	fmt.Println(r)
+	fmt.Println("Result from unmarshaling: ", r)
 	// TODO: handle error if result not present
 	return r.(map[string]interface{})["result"], nil
 }
