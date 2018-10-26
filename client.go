@@ -3,10 +3,14 @@ package main
 import (
 	"net/http"
 	"reflect"
+// 	"encoding/hex"
+	"math/big"
 	"fmt"
 	"encoding/json"
 	"bytes"
 	"io/ioutil"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 
@@ -35,6 +39,7 @@ type EthResponse struct {
 type Client struct {
 	Accounts []string	
 	Address string // http://host:port
+	AccountIndex int // which account is ours
 }
 
 func (n *Client) initializeClient(address string) (error) {
@@ -51,7 +56,7 @@ func (n *Client) initializeClient(address string) (error) {
 // Returns the address of the contract
 func (n Client) deployContract(contractCode string) (string, error) {
 	params := make(map[string]string)
-	params["from"] = n.Accounts[0] // Just pick the first account
+	params["from"] = n.Accounts[n.AccountIndex] // Just pick the first account
 	// TODO: look into using the suggested gas price
 	params["gas"] = "0xfffff" // fffff seems to be sufficient for contract deployment (default of 90k is not)
 	params["data"] = contractCode 
@@ -59,6 +64,31 @@ func (n Client) deployContract(contractCode string) (string, error) {
 	// Result is a single string which is the contract address 
 	receipt, _ := n.ethGetTransactionReceipt(tx.(string))
 	return receipt["contractAddress"].(string), err
+}
+
+func intToHex(i int) string {
+	return fmt.Sprintf("0x%x", i)
+}
+
+
+func (n Client) getSubmissions(testerAddress string) []Result {
+// curl -X POST --data '{"jsonrpc":"2.0", "method": "eth_getStorageAt", "params": ["0x295a70b2de5e3953354a6a8344e616ed314d7251", "0x0", "latest"], "id": 1}' localhost:8545
+// 	resp, err := n.makeRequest("eth_getStorageAt", []interface{}{testerAddress, intToHex(0) , "latest"})
+	address := common.HexToAddress(testerAddress)
+	client, err := ethclient.Dial("http://localhost:8545")
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
+	instance, err := NewTester(address, client)
+	count, err := instance.SubmissionCount(nil) // submission count working, now we need to find out how to 
+	var i int64
+	results := make([]Result, 0)
+	for i = 0; i < count.Int64(); i++ {
+		s, err := instance.Submissions(nil, big.NewInt(i)) // submission count working, now we need to find out how to 
+		fmt.Println("Submission:", s, err)
+		results = append(results, Result{Submitter: s.Submitter.Hex(), Pass: s.Pass})
+	}
+	return results
 }
 
 func (n Client) ethSendTransaction(from, to, data string) (interface{}, error) {

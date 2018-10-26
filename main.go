@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"flag"
 // 	"github.com/ethereum/go-ethereum"
-	"encoding/hex"
+// 	"encoding/hex"
 	"strings"
 	"path/filepath"
 	"bytes"
@@ -61,20 +62,21 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	// Body will be a smart contract which we need to compile and then submit
 	err := ioutil.WriteFile("adder.sol", buf.Bytes(), 0644)
 	adder := compileContract("Adder", "adder.sol")
-	fmt.Println("from:", dhr.client.Accounts[0])
+	fmt.Println("from:", dhr.client.Accounts[dhr.client.AccountIndex])
 	fmt.Println("to:", dhr.testAddress)
-	res, err := dhr.client.ethSendTransaction(dhr.client.Accounts[0], dhr.testAddress, buildInput(adder))
+	res, err := dhr.client.ethSendTransaction(dhr.client.Accounts[dhr.client.AccountIndex], dhr.testAddress, buildInput(adder))
 	fmt.Println(res, err)
 
 	// Query filter for results
 	// given filterID
-	testResults := dhr.client.ethGetFilterChanges(dhr.filterID)
-	testResultsBytes, _ := hex.DecodeString(testResults[2:])
-	pass := false
-	if testResultsBytes[len(testResultsBytes) - 1] > 0 {
-		pass = true
-	}
-	dhr.results = append(dhr.results, Result{dhr.client.Accounts[0], "Adder", pass})
+// 	testResults := dhr.client.ethGetFilterChanges(dhr.filterID)
+// 	testResultsBytes, _ := hex.DecodeString(testResults[2:])
+// 	pass := false
+// 	if testResultsBytes[len(testResultsBytes) - 1] > 0 {
+// 		pass = true
+// 	}
+// 	dhr.results = append(dhr.results, Result{dhr.client.Accounts[dhr.client.AccountIndex], "Adder", pass})
+	dhr.results = dhr.client.getSubmissions(dhr.testAddress)
 	// Update results
 	http.Redirect(w, r, "/view/", http.StatusFound)
 }
@@ -171,21 +173,45 @@ func buildInput(testContract string) string {
 }
 
 func main() {
+	// Take in a index into the 10 accounts created by ganache as a command line argument 
+	// Could be replaced with a pub key if it was actually geth
+	indexPtr := flag.Int("accountIndex", -1, "Index into the 10 accounts created by ganache")
+	portPtr := flag.Int("port", -1, "Port to listen on")
+	testerAddress := flag.String("testerAddress", "", "Address of the tester contract on-chain")
+	deploy := flag.Bool("deploy", false, "Boolean indicating whether you want to just deploy the tester contract")
+	flag.Parse()
+	if *deploy {
+		if *indexPtr < 0 {
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+		// Deploy the tester and print the address
+		tester := compileContract("Tester", "execute.sol")
+		var client Client
+		client.initializeClient("http://localhost:8545")
+		client.AccountIndex = *indexPtr
+		address, _ := client.deployContract(tester)
+		fmt.Println(address)
+		os.Exit(0)
+	}
+	if len(os.Args) != 4 || (*indexPtr < 0 || *indexPtr > 9) || *testerAddress == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}  
 	challenges := make(map[string]Challenge) 
 	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
-	tester := compileContract("Tester", "execute.sol")
+	// Get filter for reading results (submissions to that address)
+	// da82b96f is the first 4 bytes of the hash of TestPass(bool)  the event we are listening for
 	var client Client
 	client.initializeClient("http://localhost:8545")
-	address, _ := client.deployContract(tester)
-	fmt.Println(address)
-	// Get filter for reading results (submissions to that address)
-	filterID := client.ethNewFilter(address, "da82b96f")
-	dhr = DHR{client, filterID, make([]Result, 0), address, challenges}	
+	client.AccountIndex = *indexPtr
+	filterID := client.ethNewFilter(*testerAddress, "da82b96f")
+	dhr = DHR{client, filterID, make([]Result, 0), *testerAddress, challenges}	
 	// Call test at the tester address with argument adder 
 	// https://ethereum.stackexchange.com/questions/3780/how-can-i-create-a-listener-for-new-transaction-with-ethereum-rpc-calls
 	http.HandleFunc("/", viewChallenges)
 	http.HandleFunc("/edit/", edit)
 	http.HandleFunc("/submit/", submit)
 	http.HandleFunc("/view/", viewResults)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(fmt.Sprintf(":%v", *portPtr), nil)
 }

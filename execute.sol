@@ -18,6 +18,15 @@ contract Adder {
 contract Tester {
     event TestPass(bool res);
 
+    struct Submission {
+        bool pass;  // pass/fail
+        address submitter; // submitter address
+    }
+
+    uint public submissionCount;    
+    // This declares a state variable that
+    Submission[] public submissions;
+
     function create(bytes code) private returns (address addr){
         // Creates a contract based on code, 
         // returns address created there
@@ -27,20 +36,28 @@ contract Tester {
         }
     }
 
+    function getSubmitters() returns (address[] memory) {
+          return ;
+    }
+
     function test(bytes code) public {
         // Create the add contract
-// keccak("test(bytes)") 2f570a234f56174a0be5cf2fff788ff394b02e8140a68e91a993c49f6c1e0219
+        // keccak("test(bytes)") 2f570a234f56174a0be5cf2fff788ff394b02e8140a68e91a993c49f6c1e0219
         address deployed = create(code); 
-        if(deployed == 0) throw;
-//         // Could be some kind of error if they bytecode
-//         // the user passed in does not adhere to the
-//         // interface of Adder
+        if (deployed == 0) throw;
+        // Could be some kind of error if they bytecode
+        // the user passed in does not adhere to the
+        // interface of Adder
         Adder deployedAdder = Adder(deployed);
         // Call add and return t/f if tests pass
+        // TODO: add more extensive tests
+        submissionCount += 1;
         if (deployedAdder.add(10, 10) == 20) {
             emit TestPass(true);
+            submissions.push(Submission(true, msg.sender));
         } else {
             emit TestPass(false);
+            submissions.push(Submission(false, msg.sender));
         }
     }
 }
