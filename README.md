@@ -16,8 +16,10 @@ Then you send a transaction with the compiled version of your implementation
 and we execute it. You receive pass/fail as a boolean from a TestPass event.
 
 TODO:
+- Makefile
+- More challenges, better UI
+- Come up with a good testing strategy for the web application part 
 - Resolve front running with hash based reservation
-- Add support for ganache-cli as the RPC simulator so we can have multiple nodes talking to the same chain
 - Figure out how to self destruct the submission contract after it gets tested so
 we dont just fill up the chain with submission contracts
 - Reputation system

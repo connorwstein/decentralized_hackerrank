@@ -1,116 +1,92 @@
 package main
 
 import (
-	"fmt"
-	"flag"
-// 	"github.com/ethereum/go-ethereum"
-// 	"encoding/hex"
-	"strings"
-	"path/filepath"
 	"bytes"
-	"os/exec"
-	"os"
-	"io/ioutil"
-	"net/http"
+	"flag"
+	"fmt"
 	"html/template"
-// 	"context"
-// 	"encoding/hex"
-// 	"reflect"
+	"io/ioutil"
 	"log"
-// 	"math/big"
-//     "time"
-// 	"github.com/ethereum/go-ethereum/accounts/abi"
-// 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-// 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-// 	"github.com/ethereum/go-ethereum/common"
-// 	"github.com/ethereum/go-ethereum/common/compiler"
-// 	"github.com/ethereum/go-ethereum/core"
-// 	"github.com/ethereum/go-ethereum/core/types"
-// 	"github.com/ethereum/go-ethereum/crypto"
-// 	"reflect"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 )
 
 type DHR struct {
-	client Client // client 
-	filterID string // ID to query for results
-	results []Result // actual results
-	testAddress string // address of the tester contract
-	challenges map[string]Challenge
+	client      EthBackend // client
+	results     []Result   // actual results
+	testAddress string     // address of the tester contract
+	challenges  map[string]Challenge
 }
 
 type Challenge struct {
-	Name string
-	Difficulty string	
-	Interface string
+	Name       string
+	Difficulty string
+	Interface  string
 }
 
 type Result struct {
 	Submitter string // public key
-	Challenge string	
-	Pass bool
+	Challenge string
+	Pass      bool
 }
 
 var dhr DHR
 
 func submit(w http.ResponseWriter, r *http.Request) {
 	// This POST takes in the user's contract code
-	// Compile the smart contract code and 
+	// Compile the smart contract code and
 	// submit it to the blockchain for tests
-    body := r.FormValue("body")
+	body := r.FormValue("body")
 	log.Println(body)
 	buf := bytes.NewBufferString(body)
 	// Body will be a smart contract which we need to compile and then submit
 	err := ioutil.WriteFile("adder.sol", buf.Bytes(), 0644)
 	adder := compileContract("Adder", "adder.sol")
-	fmt.Println("from:", dhr.client.Accounts[dhr.client.AccountIndex])
-	fmt.Println("to:", dhr.testAddress)
-	res, err := dhr.client.ethSendTransaction(dhr.client.Accounts[dhr.client.AccountIndex], dhr.testAddress, buildInput(adder))
-	fmt.Println(res, err)
+	err = dhr.client.submit(adder)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// Update results
+	dhr.results, err = dhr.client.getSubmissions()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
-	// Query filter for results
-	// given filterID
-// 	testResults := dhr.client.ethGetFilterChanges(dhr.filterID)
-// 	testResultsBytes, _ := hex.DecodeString(testResults[2:])
-// 	pass := false
-// 	if testResultsBytes[len(testResultsBytes) - 1] > 0 {
-// 		pass = true
-// 	}
-// 	dhr.results = append(dhr.results, Result{dhr.client.Accounts[dhr.client.AccountIndex], "Adder", pass})
-	dhr.results = dhr.client.getSubmissions(dhr.testAddress)
 	// Update results
 	http.Redirect(w, r, "/view/", http.StatusFound)
 }
 
 func edit(w http.ResponseWriter, r *http.Request) {
- 	t, err := template.ParseFiles("edit.html")
+	t, err := template.ParseFiles("template/edit.tmpl")
 	if err != nil {
 		fmt.Println("Error when parsing template ", err)
 	}
 	challenge := r.URL.Path[len("/edit/"):]
 	fmt.Println("Editing challenge: ", challenge, dhr.challenges[challenge])
-    t.Execute(w, dhr.challenges[challenge])
+	t.Execute(w, dhr.challenges[challenge])
 }
 
 func viewResults(w http.ResponseWriter, r *http.Request) {
 	// View open challenges, reputations etc.
 	// We should be able to query the chain to get this info
 	// Clicking on a challenge should take you to the edit page
- 	t, err := template.ParseFiles("view.html")
+	t, err := template.ParseFiles("template/view.tmpl")
 	if err != nil {
 		fmt.Println("Error when parsing template ", err)
 	}
-    t.Execute(w, dhr.results)
+	t.Execute(w, dhr.results)
 }
 
 func viewChallenges(w http.ResponseWriter, r *http.Request) {
 	// Walk through all the available challenges
- 	t, err := template.ParseFiles("index.html")
+	t, err := template.ParseFiles("template/index.tmpl")
 	if err != nil {
 		fmt.Println("Error when parsing template ", err)
 	}
-    t.Execute(w, dhr.challenges)
+	t.Execute(w, dhr.challenges)
 }
-
 
 func clearCompiledContracts() {
 	files, err := filepath.Glob("*.bin")
@@ -124,8 +100,8 @@ func clearCompiledContracts() {
 	}
 }
 
-// Given path to tester contract, compile it and 
-// and return a string of bytecode 
+// Given path to tester contract, compile it and
+// and return a string of bytecode
 func compileContract(name, path string) string {
 	// Assumes solc is install locally
 	// cant use the compiler in geth codebase because of
@@ -139,76 +115,60 @@ func compileContract(name, path string) string {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println("err running cmd", err)
-		return "" 
+		return ""
 	}
 	contents, err := ioutil.ReadFile(fmt.Sprintf("%v.bin", name))
 	if err != nil {
 		fmt.Println("err reading file", err)
-		return "" 
+		return ""
 	}
 	buf := bytes.NewBuffer(contents)
 	return buf.String()
 }
 
-func padRightSide(str string, item string, count int) string {
-	return str + strings.Repeat(item, count)
-}
-
-func buildInput(testContract string) string {
-	// Given a testContract string of bytes
-	// Assemble that into input data for a call to 
-	// test in the Tester contract
-	functionSelector := "2f570a23" // 4 bytes of keccak(test(bytes))
-	// Dynamic arguments have their offset stored first 
-	// In our case test only has one argument (bytes)
-	// So it starts 32 bytes (0x20) after the start of the arguments
-	// section
-	offset := fmt.Sprintf("%064x", 32) 
-	length := fmt.Sprintf("%064x", len(testContract))
-	// Now the data section
-	// Will need to pad the testContract with zeroes 
-	// to make it a multiple of 32
-	testContract = padRightSide(testContract, "0", (len(testContract) / 32 + 1) * 32 - len(testContract))
-	return strings.Join([]string{functionSelector, offset, length, testContract}, "")
-}
-
 func main() {
-	// Take in a index into the 10 accounts created by ganache as a command line argument 
+	// Take in a index into the 10 accounts created by ganache as a command line argument
 	// Could be replaced with a pub key if it was actually geth
-	indexPtr := flag.Int("accountIndex", -1, "Index into the 10 accounts created by ganache")
+	// XXX: Easier to just use a config file here
+	publicAddress := flag.String("address", "", "public address for this client")
+	privateKey := flag.String("privateKey", "", "private key for this client")
 	portPtr := flag.Int("port", -1, "Port to listen on")
+
 	testerAddress := flag.String("testerAddress", "", "Address of the tester contract on-chain")
 	deploy := flag.Bool("deploy", false, "Boolean indicating whether you want to just deploy the tester contract")
+
 	flag.Parse()
-	if *deploy {
-		if *indexPtr < 0 {
-			flag.PrintDefaults()
-			os.Exit(1)
-		}
-		// Deploy the tester and print the address
-		tester := compileContract("Tester", "execute.sol")
-		var client Client
-		client.initializeClient("http://localhost:8545")
-		client.AccountIndex = *indexPtr
-		address, _ := client.deployContract(tester)
-		fmt.Println(address)
-		os.Exit(0)
-	}
-	if len(os.Args) != 4 || (*indexPtr < 0 || *indexPtr > 9) || *testerAddress == "" {
+
+	if *publicAddress == "" || *privateKey == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
-	}  
-	challenges := make(map[string]Challenge) 
+	}
+	if *deploy {
+		// Deploy the tester and print the address
+		var backend EthBackend
+		backend.initializeEthBackend("http://localhost:8545")
+		backend.setKeys(*publicAddress, *privateKey)
+		address, _ := backend.deployTester()
+		fmt.Println(address)
+		os.Exit(0)
+	} else if *testerAddress == "" || *portPtr < 0 {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	challenges := make(map[string]Challenge)
 	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
 	// Get filter for reading results (submissions to that address)
 	// da82b96f is the first 4 bytes of the hash of TestPass(bool)  the event we are listening for
-	var client Client
-	client.initializeClient("http://localhost:8545")
-	client.AccountIndex = *indexPtr
-	filterID := client.ethNewFilter(*testerAddress, "da82b96f")
-	dhr = DHR{client, filterID, make([]Result, 0), *testerAddress, challenges}	
-	// Call test at the tester address with argument adder 
-	// https://ethereum.stackexchange.com/questions/3780/how-can-i-create-a-listener-for-new-transaction-with-ethereum-rpc-calls
+	var backend EthBackend
+	backend.initializeEthBackend("http://localhost:8545")
+	backend.setKeys(*publicAddress, *privateKey)
+	err := backend.loadTester(*testerAddress)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	dhr = DHR{backend, make([]Result, 0), *testerAddress, challenges}
 	http.HandleFunc("/", viewChallenges)
 	http.HandleFunc("/edit/", edit)
 	http.HandleFunc("/submit/", submit)
