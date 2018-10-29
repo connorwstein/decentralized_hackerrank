@@ -1,0 +1,13 @@
+{
+    "Address" : "ef98f8e26e5ea92b8f6f5b5956b84eb5d00555e1",
+    "PrivateKey" : "dc2518acbd7b1885bf29c96f4f54afc4e384b1695e04e64ad60b4a13b4056f1e",
+    "Deploy" : false,
+    "TesterAddress" : "535782471a2f86bf77ad69c745bae3bc94ef2c53",
+    "Port" : 8889,
+    "EthBackend" : "http://localhost:8545"
+}
+
+
+
+
+

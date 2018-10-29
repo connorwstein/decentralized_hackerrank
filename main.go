@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"encoding/json"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -126,52 +127,61 @@ func compileContract(name, path string) string {
 	return buf.String()
 }
 
+type Config struct {
+	Address string 
+	PrivateKey string
+	Deploy bool
+	TesterAddress string
+	Port int
+	EthBackend string
+}
+
 func main() {
 	// Take in a index into the 10 accounts created by ganache as a command line argument
 	// Could be replaced with a pub key if it was actually geth
 	// XXX: Easier to just use a config file here
-	publicAddress := flag.String("address", "", "public address for this client")
-	privateKey := flag.String("privateKey", "", "private key for this client")
-	portPtr := flag.Int("port", -1, "Port to listen on")
-
-	testerAddress := flag.String("testerAddress", "", "Address of the tester contract on-chain")
-	deploy := flag.Bool("deploy", false, "Boolean indicating whether you want to just deploy the tester contract")
+	configFile := flag.String("config", "", "config file")
 
 	flag.Parse()
 
-	if *publicAddress == "" || *privateKey == "" {
+	if *configFile == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if *deploy {
+	config, err := os.Open(*configFile)
+	if err != nil {
+		fmt.Println("Unable to read file")
+		os.Exit(1)
+	}
+	configBytes, err := ioutil.ReadAll(config)
+	var configuration Config	
+	json.Unmarshal(configBytes, &configuration)
+	fmt.Println(configuration)	
+	// XXX: Need to validate configuration
+	if configuration.Deploy {
 		// Deploy the tester and print the address
 		var backend EthBackend
-		backend.initializeEthBackend("http://localhost:8545")
-		backend.setKeys(*publicAddress, *privateKey)
-		address, _ := backend.deployTester()
-		fmt.Println(address)
+		backend.initializeEthBackend(configuration.EthBackend)
+		backend.setKeys(configuration.Address, configuration.PrivateKey)
+		address, err := backend.deployTester()
+		fmt.Println(address, err)
 		os.Exit(0)
-	} else if *testerAddress == "" || *portPtr < 0 {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
+	} 
 	challenges := make(map[string]Challenge)
 	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
-	// Get filter for reading results (submissions to that address)
-	// da82b96f is the first 4 bytes of the hash of TestPass(bool)  the event we are listening for
 	var backend EthBackend
-	backend.initializeEthBackend("http://localhost:8545")
-	backend.setKeys(*publicAddress, *privateKey)
-	err := backend.loadTester(*testerAddress)
+	backend.initializeEthBackend(configuration.EthBackend)
+	backend.setKeys(configuration.Address, configuration.PrivateKey)
+	err = backend.loadTester(configuration.TesterAddress)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	dhr = DHR{backend, make([]Result, 0), *testerAddress, challenges}
+	dhr = DHR{backend, make([]Result, 0), configuration.TesterAddress, challenges}
 	http.HandleFunc("/", viewChallenges)
 	http.HandleFunc("/edit/", edit)
 	http.HandleFunc("/submit/", submit)
 	http.HandleFunc("/view/", viewResults)
-	http.ListenAndServe(fmt.Sprintf(":%v", *portPtr), nil)
+	http.ListenAndServe(fmt.Sprintf(":%v", configuration.Port), nil)
 }
