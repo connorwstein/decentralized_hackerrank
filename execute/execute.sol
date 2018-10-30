@@ -24,6 +24,7 @@ contract Tester {
 
     struct Submission {
         bool pass;  // pass/fail
+        string challenge;
         address submitter; // submitter address
     }
 
@@ -51,10 +52,10 @@ contract Tester {
         submissionCount += 1;
         if (deployedAdder.add(7, 3) == 10 && deployedAdder.add(-3, 3) == 0 && deployedAdder.add(-3, -7) == -10) {
             emit TestPass(true);
-            submissions.push(Submission(true, msg.sender));
+            submissions.push(Submission(true, "Adder",  msg.sender));
         } else {
             emit TestPass(false);
-            submissions.push(Submission(false, msg.sender));
+            submissions.push(Submission(false, "Adder",  msg.sender));
         }
     }
 
@@ -66,10 +67,10 @@ contract Tester {
         submissionCount += 1;
         if (keccak256(deployedStrRev.stringReverse("abcdef")) == keccak256("fedcba")) {
             emit TestPass(true);
-            submissions.push(Submission(true, msg.sender));
+            submissions.push(Submission(true, "StringReverse", msg.sender));
         } else {
             emit TestPass(false);
-            submissions.push(Submission(false, msg.sender));
+            submissions.push(Submission(false, "StringReverse", msg.sender));
         }
     }
 }

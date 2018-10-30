@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"sort"
 	"encoding/json"
 	"html/template"
 	"io/ioutil"
@@ -52,14 +53,11 @@ func submit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Update results
-	dhr.results, err = dhr.client.getSubmissions()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	http.Redirect(w, r, "/view/", http.StatusFound)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func edit(w http.ResponseWriter, r *http.Request) {
@@ -72,26 +70,50 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, dhr.challenges[challenge])
 }
 
-func viewResults(w http.ResponseWriter, r *http.Request) {
-	// View open challenges, reputations etc.
-	// We should be able to query the chain to get this info
-	// Clicking on a challenge should take you to the edit page
-	t, err := template.ParseFiles("template/view.tmpl")
-	if err != nil {
-		fmt.Println("Error when parsing template ", err)
-	}
-	// Refresh results
-	dhr.results, err = dhr.client.getSubmissions()
-	t.Execute(w, dhr.results)
+type LeaderItem struct {
+	Leader string
+	Score int
 }
 
-func viewChallenges(w http.ResponseWriter, r *http.Request) {
+type M map[string]interface{}
+// type M struct
+
+
+func home(w http.ResponseWriter, r *http.Request) {
 	// Walk through all the available challenges
 	t, err := template.ParseFiles("template/index.tmpl")
 	if err != nil {
 		fmt.Println("Error when parsing template ", err)
 	}
-	t.Execute(w, dhr.challenges)
+	dhr.results, err = dhr.client.getSubmissions()
+	// Compute leaders
+	// Show challenges
+	// Show recent submissions
+	competitors := make(map[string]int)
+	for _, res := range dhr.results {
+		if res.Pass {
+			competitors[res.Submitter] += 10
+		} else {
+			competitors[res.Submitter] -= 1
+		}
+	}
+	leaderboard := make([]LeaderItem, 0)
+	for k, v := range competitors {
+		leaderboard = append(leaderboard, LeaderItem{Leader: k, Score: v})
+	}
+	sort.Slice(leaderboard, func(i, j int) bool {
+		return leaderboard[i].Score > leaderboard[j].Score
+	})
+	challenges := make([]Challenge, 0)
+	for _, v := range dhr.challenges {
+		challenges = append(challenges, v)
+	}
+// 	toShow := struct{leaderboard []LeaderItem
+// 					 challenges []Challenge
+// 					 results []Result}{leaderboard, challenges, dhr.results}
+	toShow := M{"challenges":challenges, "leaderboard": leaderboard, 
+				"submissions": dhr.results}
+	t.Execute(w, toShow)
 }
 
 func clearCompiledContracts() {
@@ -174,8 +196,7 @@ func main() {
 	} 
 	challenges := make(map[string]Challenge)
 	challenges["Adder"] = Challenge{"Adder", "intro", "function add(int a, int b) returns (int)"}
-	challenges["StringReverse"] = Challenge{"StringReverse", "easy",
-    "function stringReverse(string input) public returns(string)"}
+	challenges["StringReverse"] = Challenge{"StringReverse", "easy", "function stringReverse(string input) public returns(string)"}
 	var backend EthBackend
 	backend.initializeEthBackend(configuration.EthBackend)
 	backend.setKeys(configuration.Address, configuration.PrivateKey)
@@ -186,9 +207,8 @@ func main() {
 	}
 
 	dhr = DHR{backend, make([]Result, 0), configuration.TesterAddress, challenges}
-	http.HandleFunc("/", viewChallenges)
+	http.HandleFunc("/", home)
 	http.HandleFunc("/edit/", edit)
 	http.HandleFunc("/submit/", submit)
-	http.HandleFunc("/view/", viewResults)
 	http.ListenAndServe(fmt.Sprintf(":%v", configuration.Port), nil)
 }

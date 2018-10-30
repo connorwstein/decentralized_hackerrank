@@ -1,8 +1,8 @@
 {
-    "Address" : "e21998280296aa6e23b32bff1889cc42cc3511a0",
-    "PrivateKey" : "9518ff4e12db3bfa09815e21bba730a551f19179fd689615c9070c30591ee678",
+    "Address" : "5956fff4bed065f1ab94a33d1c947a9752a2fcae",
+    "PrivateKey" : "d7547a4e4981ebe9eb7a9e3c07f00316f01de0572d552bae70bd0eb6f06583ac",
     "Deploy" : false,
-    "TesterAddress" : "Eb612944FE6fFcdb4fd1525C882AB78faBcB45Be",
+    "TesterAddress" : "2fa52dcE3037c456009625F919d375237F11BF60",
     "Port" : 8888,
     "EthBackend" : "http://localhost:8545"
 }

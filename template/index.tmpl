@@ -1,9 +1,36 @@
-<p> Decentralized Hackerrank </p>
+<p><b> Decentralized Hackerrank</b></p>
+
+<p><b> Leaderboard</b> </p>
 <table>
-    {{ range . }}
         <tr>
-            <td><a href="edit/{{ .Name }}">{{ .Name }}</a></td>
-            <td>{{ .Difficulty }}</td>
+        <td> User </td><td> Score </td>
         </tr>
-    {{ end }} 
+        {{ range $idx, $item := .leaderboard }}
+            <tr>
+                <td>{{ $item.Leader  }}</td>
+                <td>{{ $item.Score }}</td>
+            </tr>
+        {{ end }} 
+</table>
+<p><b> Challenges </b></p>
+<table>
+        <td> Name </td><td> Difficult </td>
+        {{ range $idx, $item := .challenges }}
+            <tr>
+                <td><a href="edit/{{ $item.Name }}">{{ $item.Name }}</a></td>
+                <td>{{ $item.Difficulty }}</td>
+            </tr>
+        {{ end }} 
+</table>
+<p><b> Recent submissions </b></p>
+<table>
+        
+        <td> User </td><td> Challenge </td><td> Result </td>
+        {{ range $idx, $item := .submissions }}
+            <tr>
+                <td>{{ $item.Submitter }}</td>
+                <td>{{ $item.Challenge }}</td>
+                <td>{{ if $item.Pass }}Pass {{ else }}Fail{{ end }}</td>
+            </tr>
+        {{ end }} 
 </table>

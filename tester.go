@@ -147,7 +147,7 @@ func (n EthBackend) getSubmissions() ([]Result, error) {
 			return nil, err
 		}
 		fmt.Println("Submission:", s, err)
-		results = append(results, Result{Submitter: s.Submitter.Hex(), Pass: s.Pass})
+		results = append(results, Result{Submitter: s.Submitter.Hex(), Challenge: s.Challenge, Pass: s.Pass})
 	}
 	return results, nil
 }
