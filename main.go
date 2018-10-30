@@ -7,11 +7,12 @@ import (
 	"encoding/json"
 	"html/template"
 	"io/ioutil"
-	"log"
+// 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"path"
 )
 
 type DHR struct {
@@ -40,22 +41,24 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	// Compile the smart contract code and
 	// submit it to the blockchain for tests
 	body := r.FormValue("body")
-	log.Println(body)
+	challenge := path.Base(r.URL.Path)
 	buf := bytes.NewBufferString(body)
 	// Body will be a smart contract which we need to compile and then submit
-	err := ioutil.WriteFile("adder.sol", buf.Bytes(), 0644)
-	adder := compileContract("Adder", "adder.sol")
-	err = dhr.client.submit(adder)
+	submissionSource := fmt.Sprintf("%v.sol", challenge)
+	err := ioutil.WriteFile(submissionSource, buf.Bytes(), 0644)
+	submissionByteCode := compileContract(challenge, submissionSource)
+	err = dhr.client.submit(challenge, submissionByteCode)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	// Update results
 	dhr.results, err = dhr.client.getSubmissions()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// Update results
 	http.Redirect(w, r, "/view/", http.StatusFound)
 }
 
@@ -77,6 +80,8 @@ func viewResults(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error when parsing template ", err)
 	}
+	// Refresh results
+	dhr.results, err = dhr.client.getSubmissions()
 	t.Execute(w, dhr.results)
 }
 
@@ -139,7 +144,6 @@ type Config struct {
 func main() {
 	// Take in a index into the 10 accounts created by ganache as a command line argument
 	// Could be replaced with a pub key if it was actually geth
-	// XXX: Easier to just use a config file here
 	configFile := flag.String("config", "", "config file")
 
 	flag.Parse()
@@ -159,6 +163,7 @@ func main() {
 	fmt.Println(configuration)	
 	// XXX: Need to validate configuration
 	if configuration.Deploy {
+		fmt.Println("Deploying new tester")
 		// Deploy the tester and print the address
 		var backend EthBackend
 		backend.initializeEthBackend(configuration.EthBackend)
@@ -168,7 +173,9 @@ func main() {
 		os.Exit(0)
 	} 
 	challenges := make(map[string]Challenge)
-	challenges["Adder"] = Challenge{"Adder", "easy", "function add(uint a, uint b) returns (uint)"}
+	challenges["Adder"] = Challenge{"Adder", "intro", "function add(int a, int b) returns (int)"}
+	challenges["StringReverse"] = Challenge{"StringReverse", "easy",
+    "function stringReverse(string input) public returns(string)"}
 	var backend EthBackend
 	backend.initializeEthBackend(configuration.EthBackend)
 	backend.setKeys(configuration.Address, configuration.PrivateKey)

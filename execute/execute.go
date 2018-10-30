@@ -16,10 +16,10 @@ import (
 )
 
 // AdderABI is the input ABI used to generate the binding from.
-const AdderABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"uint256\"},{\"name\":\"b\",\"type\":\"uint256\"}],\"name\":\"add\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const AdderABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\"int256\"},{\"name\":\"b\",\"type\":\"int256\"}],\"name\":\"add\",\"outputs\":[{\"name\":\"\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // AdderBin is the compiled bytecode used for deploying new contracts.
-const AdderBin = `0x6080604052348015600f57600080fd5b5060a18061001e6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663771602f781146043575b600080fd5b348015604e57600080fd5b50605b600435602435606d565b60408051918252519081900360200190f35b6000929150505600a165627a7a72305820d2de68dacb72250f7466fce9d3f863932e831567882cf4e355035bdcee7319f80029`
+const AdderBin = `0x`
 
 // DeployAdder deploys a new Ethereum contract, binding an instance of Adder to it.
 func DeployAdder(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Adder, error) {
@@ -176,32 +176,214 @@ func (_Adder *AdderTransactorRaw) Transact(opts *bind.TransactOpts, method strin
 	return _Adder.Contract.contract.Transact(opts, method, params...)
 }
 
-// Add is a paid mutator transaction binding the contract method 0x771602f7.
+// Add is a paid mutator transaction binding the contract method 0xa5f3c23b.
 //
-// Solidity: function add(a uint256, b uint256) returns(uint256)
+// Solidity: function add(a int256, b int256) returns(int256)
 func (_Adder *AdderTransactor) Add(opts *bind.TransactOpts, a *big.Int, b *big.Int) (*types.Transaction, error) {
 	return _Adder.contract.Transact(opts, "add", a, b)
 }
 
-// Add is a paid mutator transaction binding the contract method 0x771602f7.
+// Add is a paid mutator transaction binding the contract method 0xa5f3c23b.
 //
-// Solidity: function add(a uint256, b uint256) returns(uint256)
+// Solidity: function add(a int256, b int256) returns(int256)
 func (_Adder *AdderSession) Add(a *big.Int, b *big.Int) (*types.Transaction, error) {
 	return _Adder.Contract.Add(&_Adder.TransactOpts, a, b)
 }
 
-// Add is a paid mutator transaction binding the contract method 0x771602f7.
+// Add is a paid mutator transaction binding the contract method 0xa5f3c23b.
 //
-// Solidity: function add(a uint256, b uint256) returns(uint256)
+// Solidity: function add(a int256, b int256) returns(int256)
 func (_Adder *AdderTransactorSession) Add(a *big.Int, b *big.Int) (*types.Transaction, error) {
 	return _Adder.Contract.Add(&_Adder.TransactOpts, a, b)
 }
 
+// StringReverseABI is the input ABI used to generate the binding from.
+const StringReverseABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"input\",\"type\":\"string\"}],\"name\":\"stringReverse\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// StringReverseBin is the compiled bytecode used for deploying new contracts.
+const StringReverseBin = `0x`
+
+// DeployStringReverse deploys a new Ethereum contract, binding an instance of StringReverse to it.
+func DeployStringReverse(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *StringReverse, error) {
+	parsed, err := abi.JSON(strings.NewReader(StringReverseABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(StringReverseBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &StringReverse{StringReverseCaller: StringReverseCaller{contract: contract}, StringReverseTransactor: StringReverseTransactor{contract: contract}, StringReverseFilterer: StringReverseFilterer{contract: contract}}, nil
+}
+
+// StringReverse is an auto generated Go binding around an Ethereum contract.
+type StringReverse struct {
+	StringReverseCaller     // Read-only binding to the contract
+	StringReverseTransactor // Write-only binding to the contract
+	StringReverseFilterer   // Log filterer for contract events
+}
+
+// StringReverseCaller is an auto generated read-only Go binding around an Ethereum contract.
+type StringReverseCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// StringReverseTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type StringReverseTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// StringReverseFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type StringReverseFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// StringReverseSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type StringReverseSession struct {
+	Contract     *StringReverse    // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// StringReverseCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type StringReverseCallerSession struct {
+	Contract *StringReverseCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts        // Call options to use throughout this session
+}
+
+// StringReverseTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type StringReverseTransactorSession struct {
+	Contract     *StringReverseTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+}
+
+// StringReverseRaw is an auto generated low-level Go binding around an Ethereum contract.
+type StringReverseRaw struct {
+	Contract *StringReverse // Generic contract binding to access the raw methods on
+}
+
+// StringReverseCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type StringReverseCallerRaw struct {
+	Contract *StringReverseCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// StringReverseTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type StringReverseTransactorRaw struct {
+	Contract *StringReverseTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewStringReverse creates a new instance of StringReverse, bound to a specific deployed contract.
+func NewStringReverse(address common.Address, backend bind.ContractBackend) (*StringReverse, error) {
+	contract, err := bindStringReverse(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &StringReverse{StringReverseCaller: StringReverseCaller{contract: contract}, StringReverseTransactor: StringReverseTransactor{contract: contract}, StringReverseFilterer: StringReverseFilterer{contract: contract}}, nil
+}
+
+// NewStringReverseCaller creates a new read-only instance of StringReverse, bound to a specific deployed contract.
+func NewStringReverseCaller(address common.Address, caller bind.ContractCaller) (*StringReverseCaller, error) {
+	contract, err := bindStringReverse(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &StringReverseCaller{contract: contract}, nil
+}
+
+// NewStringReverseTransactor creates a new write-only instance of StringReverse, bound to a specific deployed contract.
+func NewStringReverseTransactor(address common.Address, transactor bind.ContractTransactor) (*StringReverseTransactor, error) {
+	contract, err := bindStringReverse(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &StringReverseTransactor{contract: contract}, nil
+}
+
+// NewStringReverseFilterer creates a new log filterer instance of StringReverse, bound to a specific deployed contract.
+func NewStringReverseFilterer(address common.Address, filterer bind.ContractFilterer) (*StringReverseFilterer, error) {
+	contract, err := bindStringReverse(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &StringReverseFilterer{contract: contract}, nil
+}
+
+// bindStringReverse binds a generic wrapper to an already deployed contract.
+func bindStringReverse(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(StringReverseABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_StringReverse *StringReverseRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _StringReverse.Contract.StringReverseCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_StringReverse *StringReverseRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _StringReverse.Contract.StringReverseTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_StringReverse *StringReverseRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _StringReverse.Contract.StringReverseTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_StringReverse *StringReverseCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _StringReverse.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_StringReverse *StringReverseTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _StringReverse.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_StringReverse *StringReverseTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _StringReverse.Contract.contract.Transact(opts, method, params...)
+}
+
+// StringReverse is a paid mutator transaction binding the contract method 0xf3582c69.
+//
+// Solidity: function stringReverse(input string) returns(string)
+func (_StringReverse *StringReverseTransactor) StringReverse(opts *bind.TransactOpts, input string) (*types.Transaction, error) {
+	return _StringReverse.contract.Transact(opts, "stringReverse", input)
+}
+
+// StringReverse is a paid mutator transaction binding the contract method 0xf3582c69.
+//
+// Solidity: function stringReverse(input string) returns(string)
+func (_StringReverse *StringReverseSession) StringReverse(input string) (*types.Transaction, error) {
+	return _StringReverse.Contract.StringReverse(&_StringReverse.TransactOpts, input)
+}
+
+// StringReverse is a paid mutator transaction binding the contract method 0xf3582c69.
+//
+// Solidity: function stringReverse(input string) returns(string)
+func (_StringReverse *StringReverseTransactorSession) StringReverse(input string) (*types.Transaction, error) {
+	return _StringReverse.Contract.StringReverse(&_StringReverse.TransactOpts, input)
+}
+
 // TesterABI is the input ABI used to generate the binding from.
-const TesterABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"code\",\"type\":\"bytes\"}],\"name\":\"test\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"submissionCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"submissions\",\"outputs\":[{\"name\":\"pass\",\"type\":\"bool\"},{\"name\":\"submitter\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"getSubmitters\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"res\",\"type\":\"bool\"}],\"name\":\"TestPass\",\"type\":\"event\"}]"
+const TesterABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"code\",\"type\":\"bytes\"}],\"name\":\"testStringReverse\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"code\",\"type\":\"bytes\"}],\"name\":\"testAdder\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"submissionCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"submissions\",\"outputs\":[{\"name\":\"pass\",\"type\":\"bool\"},{\"name\":\"submitter\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"res\",\"type\":\"bool\"}],\"name\":\"TestPass\",\"type\":\"event\"}]"
 
 // TesterBin is the compiled bytecode used for deploying new contracts.
-const TesterBin = `0x608060405234801561001057600080fd5b5061049e806100206000396000f3006080604052600436106100615763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632f570a2381146100665780636ec02be9146100c1578063ad73349e146100e8578063ae4dac4114610130575b600080fd5b34801561007257600080fd5b506040805160206004803580820135601f81018490048402850184019095528484526100bf9436949293602493928401919081908401838280828437509497506101959650505050505050565b005b3480156100cd57600080fd5b506100d6610418565b60408051918252519081900360200190f35b3480156100f457600080fd5b5061010060043561041e565b60408051921515835273ffffffffffffffffffffffffffffffffffffffff90911660208301528051918290030190f35b34801561013c57600080fd5b5061014561045c565b60408051602080825283518183015283519192839290830191858101910280838360005b83811015610181578181015183820152602001610169565b505050509050019250505060405180910390f35b6000806101a183610461565b915073ffffffffffffffffffffffffffffffffffffffff821615156101c557600080fd5b50600080546001018155604080517f771602f7000000000000000000000000000000000000000000000000000000008152600a6004820181905260248201529051839273ffffffffffffffffffffffffffffffffffffffff84169263771602f79260448083019360209383900390910190829087803b15801561024757600080fd5b505af115801561025b573d6000803e3d6000fd5b505050506040513d602081101561027157600080fd5b50516014141561034a57604080516001815290517fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e9181900360200190a160408051808201909152600180825233602083019081528154808301835560009290925291517fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf69091018054925173ffffffffffffffffffffffffffffffffffffffff166101000274ffffffffffffffffffffffffffffffffffffffff001992151560ff199094169390931791909116919091179055610413565b604080516000815290517fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e9181900360200190a16040805180820190915260008082523360208301908152600180548082018255925291517fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf69091018054925173ffffffffffffffffffffffffffffffffffffffff166101000274ffffffffffffffffffffffffffffffffffffffff001992151560ff1990941693909317919091169190911790555b505050565b60005481565b600180548290811061042c57fe5b60009182526020909120015460ff81169150610100900473ffffffffffffffffffffffffffffffffffffffff1682565b606090565b60008151602083016000f0929150505600a165627a7a7230582005dea32886e23ceb8e48b063007010320dc592f3f3b31247769a9a38ed2781430029`
+const TesterBin = `0x608060405234801561001057600080fd5b5061081d806100206000396000f3006080604052600436106100615763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663267a4728811461006657806366dfce07146100c15780636ec02be91461011a578063ad73349e14610141575b600080fd5b34801561007257600080fd5b506040805160206004803580820135601f81018490048402850184019095528484526100bf94369492936024939284019190819084018382808284375094975061017c9650505050505050565b005b3480156100cd57600080fd5b506040805160206004803580820135601f81018490048402850184019095528484526100bf9436949293602493928401919081908401838280828437509497506104d99650505050505050565b34801561012657600080fd5b5061012f6107a9565b60408051918252519081900360200190f35b34801561014d57600080fd5b506101596004356107af565b604080519215158352600160a060020a0390911660208301528051918290030190f35b600080610188836107e0565b9150600160a060020a038216151561019f57600080fd5b50600080546001018155604080517f66656463626100000000000000000000000000000000000000000000000000008152815190819003600690810182207ff3582c690000000000000000000000000000000000000000000000000000000083526020600484015260248301919091527f6162636465660000000000000000000000000000000000000000000000000000604483015291518493600160a060020a0385169263f3582c69926064808301939282900301818387803b15801561026657600080fd5b505af115801561027a573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405260208110156102a357600080fd5b8101908080516401000000008111156102bb57600080fd5b820160208101848111156102ce57600080fd5b81516401000000008111828201871017156102e857600080fd5b50509291905050506040518082805190602001908083835b6020831061031f5780518252601f199092019160209182019101610300565b6001836020036101000a038019825116818451168082178552505050505050905001915050604051809103902060001916141561041857604080516001815290517fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e9181900360200190a160408051808201909152600180825233602083019081528154808301835560009290925291517fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf690910180549251600160a060020a03166101000274ffffffffffffffffffffffffffffffffffffffff001992151560ff1990941693909317919091169190911790556104d4565b604080516000815290517fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e9181900360200190a16040805180820190915260008082523360208301908152600180548082018255925291517fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf690910180549251600160a060020a03166101000274ffffffffffffffffffffffffffffffffffffffff001992151560ff1990941693909317919091169190911790555b505050565b6000806104e5836107e0565b9150600160a060020a03821615156104fc57600080fd5b50600080546001018155604080517fa5f3c23b000000000000000000000000000000000000000000000000000000008152600760048201526003602482015290518392600160a060020a0384169263a5f3c23b9260448083019360209383900390910190829087803b15801561057157600080fd5b505af1158015610585573d6000803e3d6000fd5b505050506040513d602081101561059b57600080fd5b5051600a14801561063f5750604080517fa5f3c23b0000000000000000000000000000000000000000000000000000000081526002196004820152600360248201529051600160a060020a0383169163a5f3c23b9160448083019260209291908290030181600087803b15801561061157600080fd5b505af1158015610625573d6000803e3d6000fd5b505050506040513d602081101561063b57600080fd5b5051155b80156106e25750604080517fa5f3c23b000000000000000000000000000000000000000000000000000000008152600219600482015260061960248201529051600160a060020a0383169163a5f3c23b9160448083019260209291908290030181600087803b1580156106b157600080fd5b505af11580156106c5573d6000803e3d6000fd5b505050506040513d60208110156106db57600080fd5b5051600919145b1561041857604080516001815290517fe7230e41682a55f671747a59595e23f58680339803ff4a8a09cbc4d1a433f84e9181900360200190a160408051808201909152600180825233602083019081528154808301835560009290925291517fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf690910180549251600160a060020a03166101000274ffffffffffffffffffffffffffffffffffffffff001992151560ff1990941693909317919091169190911790556104d4565b60005481565b60018054829081106107bd57fe5b60009182526020909120015460ff811691506101009004600160a060020a031682565b60008151602083016000f0929150505600a165627a7a72305820f93119e30a71fa2098fe1e17b4c7be0783ee39459f76df438eb9f9d3a0c65b6f0029`
 
 // DeployTester deploys a new Ethereum contract, binding an instance of Tester to it.
 func DeployTester(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Tester, error) {
@@ -420,46 +602,46 @@ func (_Tester *TesterCallerSession) Submissions(arg0 *big.Int) (struct {
 	return _Tester.Contract.Submissions(&_Tester.CallOpts, arg0)
 }
 
-// GetSubmitters is a paid mutator transaction binding the contract method 0xae4dac41.
+// TestAdder is a paid mutator transaction binding the contract method 0x66dfce07.
 //
-// Solidity: function getSubmitters() returns(address[])
-func (_Tester *TesterTransactor) GetSubmitters(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Tester.contract.Transact(opts, "getSubmitters")
+// Solidity: function testAdder(code bytes) returns()
+func (_Tester *TesterTransactor) TestAdder(opts *bind.TransactOpts, code []byte) (*types.Transaction, error) {
+	return _Tester.contract.Transact(opts, "testAdder", code)
 }
 
-// GetSubmitters is a paid mutator transaction binding the contract method 0xae4dac41.
+// TestAdder is a paid mutator transaction binding the contract method 0x66dfce07.
 //
-// Solidity: function getSubmitters() returns(address[])
-func (_Tester *TesterSession) GetSubmitters() (*types.Transaction, error) {
-	return _Tester.Contract.GetSubmitters(&_Tester.TransactOpts)
+// Solidity: function testAdder(code bytes) returns()
+func (_Tester *TesterSession) TestAdder(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.TestAdder(&_Tester.TransactOpts, code)
 }
 
-// GetSubmitters is a paid mutator transaction binding the contract method 0xae4dac41.
+// TestAdder is a paid mutator transaction binding the contract method 0x66dfce07.
 //
-// Solidity: function getSubmitters() returns(address[])
-func (_Tester *TesterTransactorSession) GetSubmitters() (*types.Transaction, error) {
-	return _Tester.Contract.GetSubmitters(&_Tester.TransactOpts)
+// Solidity: function testAdder(code bytes) returns()
+func (_Tester *TesterTransactorSession) TestAdder(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.TestAdder(&_Tester.TransactOpts, code)
 }
 
-// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+// TestStringReverse is a paid mutator transaction binding the contract method 0x267a4728.
 //
-// Solidity: function test(code bytes) returns()
-func (_Tester *TesterTransactor) Test(opts *bind.TransactOpts, code []byte) (*types.Transaction, error) {
-	return _Tester.contract.Transact(opts, "test", code)
+// Solidity: function testStringReverse(code bytes) returns()
+func (_Tester *TesterTransactor) TestStringReverse(opts *bind.TransactOpts, code []byte) (*types.Transaction, error) {
+	return _Tester.contract.Transact(opts, "testStringReverse", code)
 }
 
-// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+// TestStringReverse is a paid mutator transaction binding the contract method 0x267a4728.
 //
-// Solidity: function test(code bytes) returns()
-func (_Tester *TesterSession) Test(code []byte) (*types.Transaction, error) {
-	return _Tester.Contract.Test(&_Tester.TransactOpts, code)
+// Solidity: function testStringReverse(code bytes) returns()
+func (_Tester *TesterSession) TestStringReverse(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.TestStringReverse(&_Tester.TransactOpts, code)
 }
 
-// Test is a paid mutator transaction binding the contract method 0x2f570a23.
+// TestStringReverse is a paid mutator transaction binding the contract method 0x267a4728.
 //
-// Solidity: function test(code bytes) returns()
-func (_Tester *TesterTransactorSession) Test(code []byte) (*types.Transaction, error) {
-	return _Tester.Contract.Test(&_Tester.TransactOpts, code)
+// Solidity: function testStringReverse(code bytes) returns()
+func (_Tester *TesterTransactorSession) TestStringReverse(code []byte) (*types.Transaction, error) {
+	return _Tester.Contract.TestStringReverse(&_Tester.TransactOpts, code)
 }
 
 // TesterTestPassIterator is returned from FilterTestPass and is used to iterate over the raw logs and unpacked data for TestPass events raised by the Tester contract.

@@ -11,8 +11,12 @@ pragma solidity ^0.4.24;
 // be able to send some contract deploy byte code to the 0x
 
 // Just the interface of the deployed contract, required
-contract Adder {
-    function add(uint a, uint b) returns (uint){}
+interface Adder {
+    function add(int a, int b) public returns (int);
+}
+
+interface StringReverse {
+    function stringReverse(string input) public returns(string);
 }
 
 contract Tester {
@@ -34,25 +38,33 @@ contract Tester {
             addr := create(0, add(code, 0x20), mload(code))
             //jumpi(invalidJumpLabel,iszero(extcodesize(addr)))
         }
+        return addr;
     }
 
-    function getSubmitters() returns (address[] memory) {
-          return ;
-    }
-
-    function test(bytes code) public {
-        // Create the add contract
-        // keccak("test(bytes)") 2f570a234f56174a0be5cf2fff788ff394b02e8140a68e91a993c49f6c1e0219
+    function testAdder(bytes code) public {
         address deployed = create(code); 
         if (deployed == 0) throw;
         // Could be some kind of error if they bytecode
         // the user passed in does not adhere to the
         // interface of Adder
         Adder deployedAdder = Adder(deployed);
-        // Call add and return t/f if tests pass
+        submissionCount += 1;
+        if (deployedAdder.add(7, 3) == 10 && deployedAdder.add(-3, 3) == 0 && deployedAdder.add(-3, -7) == -10) {
+            emit TestPass(true);
+            submissions.push(Submission(true, msg.sender));
+        } else {
+            emit TestPass(false);
+            submissions.push(Submission(false, msg.sender));
+        }
+    }
+
+    function testStringReverse(bytes code) public {
+        address deployed = create(code); 
+        if (deployed == 0) throw;
+        StringReverse deployedStrRev = StringReverse(deployed);
         // TODO: add more extensive tests
         submissionCount += 1;
-        if (deployedAdder.add(10, 10) == 20) {
+        if (keccak256(deployedStrRev.stringReverse("abcdef")) == keccak256("fedcba")) {
             emit TestPass(true);
             submissions.push(Submission(true, msg.sender));
         } else {

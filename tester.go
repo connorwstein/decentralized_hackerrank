@@ -91,7 +91,7 @@ func (n *EthBackend) loadTester(addressHex string) error {
 	return nil
 }
 
-func (n EthBackend) submit(codeSubmission string) error {
+func (n EthBackend) submit(challenge, codeSubmission string) error {
 	if n.instance == nil {
 		return fmt.Errorf("Tester contract not deployed")
 	}
@@ -105,16 +105,32 @@ func (n EthBackend) submit(codeSubmission string) error {
 		}
 		return tx.WithSignature(signer, signature)
 	}
-	transOpts := bind.TransactOpts{From: common.HexToAddress(n.publicKey), Signer: signerFn}
+	// If you omit the gas price and gas limit
+	// it will try and make an estimate, but sometimes
+	// the estimate isn't enough 
+	transOpts := bind.TransactOpts{
+					From: common.HexToAddress(n.publicKey), 
+					Signer: signerFn, 
+					GasPrice: big.NewInt(20000000000), // price in wei
+					GasLimit: 5000000} 
 	decoded, err := hex.DecodeString(codeSubmission)
 	if err != nil {
 		return err
 	}
-	tx, err := n.instance.Test(&transOpts, decoded) // Submits to the tester contract
-	if err != nil {
-		return err
+	switch challenge {
+		case "Adder":
+			tx, err := n.instance.TestAdder(&transOpts, decoded) 
+			if err != nil {
+				return err
+			}
+			fmt.Println(tx, err)
+		case "StringReverse": 
+			tx, err := n.instance.TestStringReverse(&transOpts, decoded) 
+			if err != nil {
+				return err
+			}
+			fmt.Println(tx, err)
 	}
-	fmt.Println(tx, err)
 	return nil
 }
 
